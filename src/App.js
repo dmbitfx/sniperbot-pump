@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import useWebSocket from 'react-use-websocket';
+import axios from 'axios';
 import './App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
     const lastPrice = parseFloat(ticker.c);
     if (config.side === 'BUY' && config.buy > 0 && lastPrice <= config.buy) {
       console.log('BUY ' + lastPrice);
+      buyNow();
       config.side = 'SELL';
 
       setProfit({
@@ -33,6 +35,7 @@ function App() {
     }
     else if (config.side === 'SELL' && config.sell > profit.lastBuy && lastPrice >= config.sell) {
       console.log('SELL ' + lastPrice);
+      sellNow();
       config.side = 'BUY';
       const lastProfit = lastPrice - profit.lastBuy;
 
@@ -83,12 +86,24 @@ function App() {
   }
 
   function onValueChange(event){
-    setConfig(prevState => ({...prevState, [event.target.id]: parseFloat(event.target.value) }));
+    setConfig(prevState => ({ ...prevState, [event.target.id]: parseFloat(event.target.value) }));
+  }
+
+  function buyNow(){
+    axios.post('http://localhost:3001/BUY/' + config.symbol + '/0.01')
+         .then(result => console.log(result.data))
+         .catch(err => console.error(err));
+  }
+
+  function sellNow(){
+    axios.post('http://localhost:3001/SELL/' + config.symbol + '/0.01')
+         .then(result => console.log(result.data))
+         .catch(err => console.error(err));
   }
 
   return (
         <div>
-      <h1>SniperBot 1.0</h1>
+      <h1>SniperBot-Pump</h1>
       <div className="tradingview-widget-container">
         <div id="tradingview_65b85"></div>
       </div>
@@ -98,7 +113,6 @@ function App() {
           Symbol: <select id= "symbol" defaultValue={"config.symbol"} onChange={onSymbolChange}>
           <option>BTCUSDT</option>
           <option>ETHUSDT</option>
-          <option>BTCBRL</option>
           </select><br />
           Buy at:<input type="number" id="buy" defaultValue={config.buy} onChange={onValueChange} /><br />
           Sell at:<input type="number" id="sell" defaultValue={config.sell} onChange={onValueChange} /><br />
